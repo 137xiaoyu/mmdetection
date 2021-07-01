@@ -25,7 +25,7 @@ def get_version():
 def make_cuda_ext(name, module, sources, sources_cuda=[]):
 
     define_macros = []
-    extra_compile_args = {'cxx': []}
+    extra_compile_args = {'cxx': ['-DMS_WIN64', '-MD']}
 
     if torch.cuda.is_available() or os.getenv('FORCE_CUDA', '0') == '1':
         define_macros += [('WITH_CUDA', None)]
