@@ -138,8 +138,8 @@ def safebelt_iou(preson_frame, thing_frame, p=0.3):
 
 
 if __name__ == '__main__':
-    test_csv_name = '/home/wucx/dataset/gdgrid3/3_testa_user.csv'
-    result_dir = 'work_dirs_test/detectors_htc_r101_20e_coco_002'
+    test_csv_name = 'D:/137/dataset/gdgrid3/3_testa_user.csv'
+    result_dir = 'work_dirs/test/detectors_htc_r101_20e_coco_001'
     result_pkl_name = os.path.join(result_dir, 'results.pkl')
     result_json_name = os.path.join(result_dir, 'results.json')
     

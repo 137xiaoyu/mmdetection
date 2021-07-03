@@ -22,7 +22,7 @@ import glob
 def parse_args():
     config_file = 'configs/detectors/detectors_htc_r101_20e_coco.py'
     
-    ckpt_file = 'work_dirs/train/detectors_htc_r101_20e_coco_001/epoch_27.pth'
+    ckpt_file = 'work_dirs/train/detectors_htc_r101_20e_coco_002/epoch_21.pth'
     
     work_dir = 'work_dirs/eval/' + config_file.split('/')[-1].split('.')[0]
     dirs = sorted(glob.glob(f'{work_dir}*'))
