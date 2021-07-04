@@ -1,5 +1,5 @@
 _base_ = '../cascade_rcnn/cascade_rcnn_r50_fpn_1x_coco.py'
-norm_cfg = dict(type='SyncBN', requires_grad=True)
+norm_cfg = dict(type='BN', requires_grad=True)
 model = dict(
     backbone=dict(
         type='ResNeSt',
@@ -24,7 +24,7 @@ model = dict(
                 fc_out_channels=1024,
                 norm_cfg=norm_cfg,
                 roi_feat_size=7,
-                num_classes=80,
+                num_classes=1,
                 bbox_coder=dict(
                     type='DeltaXYWHBBoxCoder',
                     target_means=[0., 0., 0., 0.],
@@ -43,7 +43,7 @@ model = dict(
                 fc_out_channels=1024,
                 norm_cfg=norm_cfg,
                 roi_feat_size=7,
-                num_classes=80,
+                num_classes=1,
                 bbox_coder=dict(
                     type='DeltaXYWHBBoxCoder',
                     target_means=[0., 0., 0., 0.],
@@ -62,7 +62,7 @@ model = dict(
                 fc_out_channels=1024,
                 norm_cfg=norm_cfg,
                 roi_feat_size=7,
-                num_classes=80,
+                num_classes=1,
                 bbox_coder=dict(
                     type='DeltaXYWHBBoxCoder',
                     target_means=[0., 0., 0., 0.],
