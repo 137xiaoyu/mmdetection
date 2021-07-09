@@ -9,6 +9,8 @@ from mmdet.core import PolygonMasks
 from mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
 from ..builder import PIPELINES
 
+from mmdet.core.mask import BitmapMasks
+
 try:
     from imagecorruptions import corrupt
 except ImportError:
@@ -1903,3 +1905,67 @@ class CutOut:
                      else f'cutout_shape={self.candidates}, ')
         repr_str += f'fill_in={self.fill_in})'
         return repr_str
+
+
+@PIPELINES.register_module
+class MixUp(object):
+    def __init__(self, p=0.5, lambd=0.5):
+        self.lambd = lambd
+        self.p = p
+        self.img2 = None
+        self.bboxes2 = None
+        self.labels2 = None
+        self.masks2 = None
+
+    def __call__(self, results):
+        img1, bboxes1, labels1 = [
+            results[k] for k in ('img', 'gt_bboxes', 'gt_labels')
+        ]
+        
+        if 'gt_masks' in results:
+            masks1 = results['gt_masks']
+            
+        if random.random() < self.p and self.img2 is not None:
+
+            height = max(img1.shape[0], self.img2.shape[0])
+            width = max(img1.shape[1], self.img2.shape[1])
+            mixup_image = np.zeros([height, width, 3], dtype='float32')
+            mixup_image[:img1.shape[0], :img1.shape[1], :] = img1.astype('float32') * self.lambd
+            mixup_image[:self.img2.shape[0], :self.img2.shape[1], :] += self.img2.astype('float32') * (1. - self.lambd)
+            
+            mixup_image = mixup_image.astype('uint8')
+            mixup_bboxes = np.vstack((bboxes1, self.bboxes2))
+            mixup_labels = np.hstack((labels1, self.labels2))
+            results['img'] = mixup_image
+            results['gt_bboxes'] = mixup_bboxes
+            results['gt_labels'] = mixup_labels
+            
+            if 'gt_masks' in results:
+                mixup_masks = np.concatenate((masks1.expand(height, width, 0, 0), 
+                                              self.masks2.expand(height, width, 0, 0)), axis=0)
+                mixup_masks = BitmapMasks(mixup_masks, height, width)
+                results['gt_masks'] = mixup_masks
+                
+                # print(f'bboxes1: {bboxes1}\n' +
+                #       f'bboxes2: {self.bboxes2}\n' +
+                #       f'mixup_bboxes: {mixup_bboxes}\n' +
+                #       f'labels1: {labels1}\n' +
+                #       f'labels2: {self.labels2}\n' +
+                #       f'mixup_labels: {mixup_labels}\n' +
+                #       f'masks1 shape: {masks1.to_ndarray().shape}\n' +
+                #       f'masks1: {masks1.to_ndarray()}\n' +
+                #       f'masks2 shape: {self.masks2.to_ndarray().shape}\n' +
+                #       f'masks2: {self.masks2.to_ndarray()}\n' +
+                #       f'mixup_masks: {mixup_masks}\n')
+                
+        else:
+            pass
+        
+        self.img2 = img1
+        self.bboxes2 = bboxes1
+        self.labels2 = labels1
+        
+        if 'gt_masks' in results:
+            self.masks2 = masks1
+        
+        return results

@@ -23,6 +23,8 @@ import glob
 def parse_args():
     config_file = 'configs/detectors/detectors_htc_r101_20e_coco.py'
     
+    resume_file = 'work_dirs_gdgrid3/train/detectors_htc_r101_20e_coco_003/epoch_34.pth'
+    
     work_dir = 'work_dirs_gdgrid3/train/' + config_file.split('/')[-1].split('.')[0]
     dirs = sorted(glob.glob(f'{work_dir}*'))
     if dirs:
@@ -38,7 +40,8 @@ def parse_args():
     parser.add_argument('--work-dir', help='the dir to save logs and models',
                         default=work_dir)
     parser.add_argument(
-        '--resume-from', help='the checkpoint file to resume from')
+        '--resume-from', help='the checkpoint file to resume from',
+        default=resume_file)
     parser.add_argument(
         '--no-validate',
         action='store_true',
@@ -59,6 +62,7 @@ def parse_args():
         default=[0])
     parser.add_argument('--seed', type=int, default=None, help='random seed')
     parser.add_argument(
+        
         '--deterministic',
         action='store_true',
         help='whether to set deterministic options for CUDNN backend.')
