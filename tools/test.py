@@ -17,11 +17,23 @@ from mmdet.models import build_detector
 
 
 def parse_args():
+    cfg = ('configs/swin/' + 
+           'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
+    
+    ckpt = ('work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco/' +
+            'epoch_18.pth')
+    
+    cfg_options = {'model.pretrained': 'swin_base_patch4_window12_384_22k.pth',
+                   'model.backbone.use_checkpoint': 'True'}
+    
+    out = ('work_dirs/cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco/' +
+           'results.pkl')
+    
     parser = argparse.ArgumentParser(
         description='MMDet test (and eval) a model')
-    parser.add_argument('config', help='test config file path')
-    parser.add_argument('checkpoint', help='checkpoint file')
-    parser.add_argument('--out', help='output result file in pickle format')
+    parser.add_argument('--config', default=cfg, help='test config file path')
+    parser.add_argument('--checkpoint', default=ckpt, help='checkpoint file')
+    parser.add_argument('--out', default=out, help='output result file in pickle format')
     parser.add_argument(
         '--fuse-conv-bn',
         action='store_true',
@@ -59,6 +71,7 @@ def parse_args():
         '--cfg-options',
         nargs='+',
         action=DictAction,
+        default=cfg_options,
         help='override some settings in the used config, the key-value pair '
         'in xxx=yyy format will be merged into config file. If the value to '
         'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
