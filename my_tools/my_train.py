@@ -22,8 +22,8 @@ import glob
 
 def parse_args():
     # config_file = 'configs/resnest/cascade_mask_rcnn_s101_fpn_syncbn-backbone+head_mstrain_1x_coco.py'
-    config_file = 'configs/resnest/cascade_rcnn_s101_fpn_syncbn-backbone+head_mstrain-range_1x_coco.py'
-    # config_file = 'configs/detectors/detectors_htc_r101_20e_coco.py'
+    # config_file = 'configs/resnest/cascade_rcnn_s101_fpn_syncbn-backbone+head_mstrain-range_1x_coco.py'
+    config_file = 'configs/detectors/detectors_htc_r101_20e_coco.py'
     
     work_dir = 'work_dirs_tzb/train/' + config_file.split('/')[-1].split('.')[0]
     dirs = sorted(glob.glob(f'{work_dir}*'))
@@ -50,15 +50,13 @@ def parse_args():
         '--gpus',
         type=int,
         help='number of gpus to use '
-        '(only applicable to non-distributed training)',
-        default=1)
+        '(only applicable to non-distributed training)')
     group_gpus.add_argument(
         '--gpu-ids',
         type=int,
         nargs='+',
         help='ids of gpus to use '
-        '(only applicable to non-distributed training)',
-        default=[0])
+        '(only applicable to non-distributed training)')
     parser.add_argument('--seed', type=int, default=None, help='random seed')
     parser.add_argument(
         '--deterministic',
