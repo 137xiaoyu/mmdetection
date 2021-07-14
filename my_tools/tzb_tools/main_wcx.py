@@ -89,7 +89,7 @@ def py_cpu_nms_poly_fast_np(dets, thresh):
             hbb_ovr[h_inds[j]] = iou
 
         try:
-            if math.isnan(ovr[0]):
+            if np.isnan(ovr[0]):
                 pdb.set_trace()
         except:
             pass
@@ -197,7 +197,8 @@ if __name__ == '__main__':
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    output_path = f'{args.output_dir}/ship_results.json'
-    json.dump(output_dicts, output_path, indent=4)
+    output_filename = f'{args.output_dir}/ship_results.json'
+    with open(output_filename, 'w') as json_file:
+        json.dump(output_dicts, json_file, indent=4)
 
     print('done')
