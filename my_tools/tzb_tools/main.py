@@ -132,8 +132,8 @@ def inference_single(model,imagname, slide_size, chip_size,classnames):
                 raise ValueError(f'type of chip_detections should be list or ndarray, not {type(chip_detections)}')
 
             for cls_id, name in enumerate(classnames):
-                chip_detections[cls_id][:][:, 0::2] = chip_detections[cls_id][:][:, 0::2] + i * slide_w
-                chip_detections[cls_id][:][:, 1::2] = chip_detections[cls_id][:][:, 1::2] + j * slide_h
+                chip_detections[cls_id][:, 0:-1:2] += i * slide_w
+                chip_detections[cls_id][:, 1:-1:2] += j * slide_h
                 try:
                     total_detections[cls_id] = np.concatenate((total_detections[cls_id], chip_detections[cls_id]))
                 except:
