@@ -46,4 +46,7 @@ data = dict(
         ann_file=data_root + 'annotations/instances_val2017.json',
         img_prefix=data_root + 'val2017/',
         pipeline=test_pipeline))
-evaluation = dict(metric=['bbox'], classwise=True)
+evaluation = dict(metric=['bbox'],
+                  metric_items=['mAP', 'mAP_50', 'mAP_75', 'mAP_s', 'mAP_m', 'mAP_l',
+                                'AR@100', 'AR@300', 'AR@1000', 'AR_s@1000', 'AR_m@1000', 'AR_l@1000'],
+                  classwise=True)

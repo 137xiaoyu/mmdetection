@@ -3,7 +3,7 @@ import numpy as np
 import sys
 sys.path.append('/dev2/Fengjq/1grade/ship_det/mmdetection/fjq_workspace/tools/')
 
-from utils_for_evaluate import evaluate_two_jsons_with_different_confidence
+from utils_for_evaluate_eval_only import evaluate_two_jsons_with_different_confidence
 
 
 if __name__ == '__main__':

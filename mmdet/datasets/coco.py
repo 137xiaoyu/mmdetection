@@ -554,6 +554,11 @@ class CocoDataset(CustomDataset):
                 eval_results[f'{metric}_mAP_copypaste'] = (
                     f'{ap[0]:.3f} {ap[1]:.3f} {ap[2]:.3f} {ap[3]:.3f} '
                     f'{ap[4]:.3f} {ap[5]:.3f}')
+                if len(metric_items) == 12:
+                    ar = cocoEval.stats[6:]
+                    eval_results[f'{metric}_AR_copypaste'] = (
+                        f'{ar[0]:.3f} {ar[1]:.3f} {ar[2]:.3f} {ar[3]:.3f} '
+                        f'{ar[4]:.3f} {ar[5]:.3f}')
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return eval_results

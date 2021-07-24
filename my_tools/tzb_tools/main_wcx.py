@@ -18,8 +18,8 @@ import DOTA_devkit.polyiou as polyiou
 
 def parse_args():
     cfg_name = 'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py'
-    ckpt_name = 'epoch_35.pth'
-    device = 'cuda:3'
+    ckpt_name = 'epoch_151.pth'
+    device = 'cuda:1'
 
 
     subsize = 768
@@ -141,8 +141,9 @@ if __name__ == '__main__':
 
     cfg = Config.fromfile(args.config)
 
-    print(f'score_thr={cfg.model.test_cfg.rcnn.score_thr}')
-    print(f'subsize={args.subsize}, overlap={args.overlap}')
+    print(f'score_thr={cfg.model.test_cfg.rcnn.score_thr}\n'
+          f'subsize={args.subsize}, overlap={args.overlap}\n'
+          f'device={args.device}')
 
 
     print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: initializing detector...')
@@ -192,12 +193,19 @@ if __name__ == '__main__':
         output_dict.update({'labels': labels})
         output_dicts.append(output_dict)
 
+
     print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: writing results to json...')
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
+    total_results_num = 0
+    for output_dict in output_dicts:
+        total_results_num += len(output_dict['labels'])
+    print(f'total_results_num={total_results_num}')
+
     output_filename = f'{args.output_dir}/ship_results.json'
+    print(output_filename)
     with open(output_filename, 'w') as json_file:
         json.dump(output_dicts, json_file, indent=4)
 
