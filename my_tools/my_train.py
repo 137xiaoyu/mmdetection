@@ -21,9 +21,7 @@ import glob
 
 
 def parse_args():
-    # config_file = 'configs/resnest/cascade_mask_rcnn_s101_fpn_syncbn-backbone+head_mstrain_1x_coco.py'
-    # config_file = 'configs/resnest/cascade_rcnn_s101_fpn_syncbn-backbone+head_mstrain-range_1x_coco.py'
-    config_file = 'configs/detectors/detectors_htc_r101_20e_coco.py'
+    config_file = 'configs/detectors/detectors_cascade_rcnn_r50_1x_coco.py'
     
     work_dir = 'work_dirs_tzb/train/' + config_file.split('/')[-1].split('.')[0]
     dirs = sorted(glob.glob(f'{work_dir}*'))
