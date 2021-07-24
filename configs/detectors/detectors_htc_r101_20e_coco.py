@@ -25,4 +25,29 @@ model = dict(
             sac=dict(type='SAC', use_deform=True),
             stage_with_sac=(False, True, True, True),
             pretrained='torchvision://resnet101',
-            style='pytorch')))
+            style='pytorch')),
+    test_cfg=dict(
+        rcnn=dict(
+            score_thr=0.05)))
+
+runner = dict(type='EpochBasedRunner', max_epochs=200)
+optimizer = dict(type='SGD', lr=0.005, momentum=0.9, weight_decay=0.0001)
+
+data_root = 'D:/137/dataset/tzb/input_path_coco/'
+data = dict(
+    samples_per_gpu=4,
+    workers_per_gpu=4,
+    train=dict(
+        ann_file=data_root + 'annotations/instances_train2017.json',
+        img_prefix=data_root + 'train2017/'),
+    val=dict(
+        ann_file=data_root + 'annotations/instances_val2017.json',
+        img_prefix=data_root + 'val2017/'),
+    test=dict(
+        ann_file=data_root + 'annotations/instances_val2017.json',
+        img_prefix=data_root + 'val2017/'))
+
+evaluation = dict(metric=['bbox'],
+                  metric_items=['mAP', 'mAP_50', 'mAP_75', 'mAP_s', 'mAP_m', 'mAP_l',
+                                'AR@100', 'AR@300', 'AR@1000', 'AR_s@1000', 'AR_m@1000', 'AR_l@1000'],
+                  classwise=True)
