@@ -75,7 +75,7 @@ lr_config = dict(
 
 runner = dict(type='EpochBasedRunner', max_epochs=200)
 
-optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=0.03, momentum=0.9, weight_decay=0.0001)
 
 data_root = 'D:/137/dataset/tzb/input_path_coco/'
 data = dict(

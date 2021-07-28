@@ -23,6 +23,9 @@ import glob
 def parse_args():
     config_file = 'configs/detectors/detectors_cascade_rcnn_r50_1x_coco.py'
     
+    # resume_file = 'work_dirs_tzb/train/detectors_cascade_rcnn_r50_1x_coco_001/epoch_200.pth'
+    resume_file = None
+    
     work_dir = 'work_dirs_tzb/train/' + config_file.split('/')[-1].split('.')[0]
     dirs = sorted(glob.glob(f'{work_dir}*'))
     if dirs:
@@ -38,7 +41,8 @@ def parse_args():
     parser.add_argument('--work-dir', help='the dir to save logs and models',
                         default=work_dir)
     parser.add_argument(
-        '--resume-from', help='the checkpoint file to resume from')
+        '--resume-from', help='the checkpoint file to resume from',
+        default=resume_file)
     parser.add_argument(
         '--no-validate',
         action='store_true',
