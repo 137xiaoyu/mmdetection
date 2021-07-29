@@ -1,4 +1,5 @@
 import os
+import json
 import numpy as np
 import sys
 sys.path.append('/dev2/Fengjq/1grade/ship_det/mmdetection/fjq_workspace/tools/')
@@ -7,8 +8,8 @@ from utils_for_evaluate_eval_only import evaluate_two_jsons_with_different_confi
 
 
 if __name__ == '__main__':
-    cfg_name = 'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py'
-    ckpt_name = 'epoch_151.pth'
+    cfg_name = 'htc_swin_large_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py'
+    ckpt_name = 'epoch_195.pth'
 
 
     file_root = os.path.abspath('work_dirs')
@@ -62,7 +63,15 @@ if __name__ == '__main__':
         F1_all.append(F1)
 
     mF1 = np.mean(F1_all)
-    print("confidence   precision   recall   F1  ")
+    print("\nconfidence   precision   recall   F1  ")
     for i, (c, p, r, f1) in enumerate(zip(confidence_all, precision_all, recall_all, F1_all)):
         print('{:.3f}        {:.3f}       {:.3f}    {:.3f}'.format(c, p[0], r[0], f1[0]))
     print("mF1 = {}".format(mF1))
+
+    with open(predict_json_file, 'r') as file:
+        preds = json.load(file)
+    
+    total_results_num = 0
+    for pred in preds:
+        total_results_num += len(pred['labels'])
+    print(f'total_results_num = {total_results_num}\n')

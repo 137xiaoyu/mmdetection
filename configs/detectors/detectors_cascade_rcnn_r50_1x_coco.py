@@ -73,7 +73,7 @@ lr_config = dict(
     warmup_ratio=0.001,
     step=[16, 19])
 
-runner = dict(type='EpochBasedRunner', max_epochs=200)
+runner = dict(type='EpochBasedRunner', max_epochs=400)
 
 optimizer = dict(type='SGD', lr=0.03, momentum=0.9, weight_decay=0.0001)
 
@@ -94,7 +94,9 @@ data = dict(
         img_prefix=data_root + 'val2017/',
         pipeline=test_pipeline))
 
-evaluation = dict(interval=1,
+checkpoint_config = dict(interval=5)
+
+evaluation = dict(interval=5,
                   metric='bbox',
                   metric_items=['mAP', 'mAP_50', 'mAP_75', 'mAP_s', 'mAP_m', 'mAP_l',
                                 'AR@100', 'AR@300', 'AR@1000', 'AR_s@1000', 'AR_m@1000', 'AR_l@1000'])
