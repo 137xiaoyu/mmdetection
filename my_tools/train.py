@@ -19,11 +19,22 @@ from mmdet.utils import collect_env, get_root_logger
 
 
 def parse_args():
+    cfg = ('configs/swin/' + 
+           'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
+    
+    cfg_options = {'model.pretrained': 'swin_base_patch4_window12_384_22k.pth',
+                   'model.backbone.use_checkpoint': 'True'}
+    
+    # resume_file = ('work_dirs/' + 
+    #                'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco/' + 
+    #                'epoch_36.pth')
+    resume_file = None
+    
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('config', help='train config file path')
+    parser.add_argument('--config', default=cfg, help='train config file path')
     parser.add_argument('--work-dir', help='the dir to save logs and models')
     parser.add_argument(
-        '--resume-from', help='the checkpoint file to resume from')
+        '--resume-from', default=resume_file, help='the checkpoint file to resume from')
     parser.add_argument(
         '--no-validate',
         action='store_true',
@@ -56,6 +67,7 @@ def parse_args():
         '--cfg-options',
         nargs='+',
         action=DictAction,
+        default=cfg_options,
         help='override some settings in the used config, the key-value pair '
         'in xxx=yyy format will be merged into config file. If the value to '
         'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
