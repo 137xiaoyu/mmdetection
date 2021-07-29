@@ -20,20 +20,21 @@ from .custom import CustomDataset
 @DATASETS.register_module()
 class CocoDataset(CustomDataset):
 
-    CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
-               'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
-               'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
-               'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
-               'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
-               'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat',
-               'baseball glove', 'skateboard', 'surfboard', 'tennis racket',
-               'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl',
-               'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
-               'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
-               'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop',
-               'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
-               'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
-               'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
+    CLASSES = ('bigship', )
+    # CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+    #            'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
+    #            'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
+    #            'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
+    #            'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
+    #            'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat',
+    #            'baseball glove', 'skateboard', 'surfboard', 'tennis racket',
+    #            'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl',
+    #            'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
+    #            'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+    #            'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop',
+    #            'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
+    #            'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
+    #            'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
 
     def load_annotations(self, ann_file):
         """Load annotation from COCO style annotation file.
@@ -541,6 +542,11 @@ class CocoDataset(CustomDataset):
                 eval_results[f'{metric}_mAP_copypaste'] = (
                     f'{ap[0]:.3f} {ap[1]:.3f} {ap[2]:.3f} {ap[3]:.3f} '
                     f'{ap[4]:.3f} {ap[5]:.3f}')
+                if len(metric_items) == 12:
+                    ar = cocoEval.stats[6:]
+                    eval_results[f'{metric}_AR_copypaste'] = (
+                        f'{ar[0]:.3f} {ar[1]:.3f} {ar[2]:.3f} {ar[3]:.3f} '
+                        f'{ar[4]:.3f} {ar[5]:.3f}')
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return eval_results

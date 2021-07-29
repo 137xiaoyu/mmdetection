@@ -16,23 +16,33 @@ from mmdet.apis import set_random_seed, train_detector
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 from mmdet.utils import collect_env, get_root_logger
+import glob
 
 
 def parse_args():
     cfg = ('configs/swin/' + 
-           'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
+           'htc_swin_large_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
     
-    cfg_options = {'model.pretrained': 'swin_base_patch4_window12_384_22k.pth',
+    cfg_options = {'model.pretrained': 'swin_large_patch4_window12_384_22k.pth',
                    'model.backbone.use_checkpoint': 'True'}
     
-    # resume_file = ('work_dirs/' + 
-    #                'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco/' + 
-    #                'epoch_36.pth')
+    # resume_file = ('work_dirs_tzb/' + 
+    #                'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_002/' + 
+    #                'epoch_78.pth')
     resume_file = None
+    
+    work_dir = 'work_dirs_tzb/' + cfg.split('/')[-1].split('.')[0]
+    dirs = sorted(glob.glob(f'{work_dir}*'))
+    if dirs:
+        last_dir = dirs[-1]
+        prefix, index = last_dir.rsplit('_', 1)
+        work_dir = prefix + '_' + str(int(index) + 1).zfill(3)
+    else:
+        work_dir += '_' + '1'.zfill(3)
     
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('--config', default=cfg, help='train config file path')
-    parser.add_argument('--work-dir', help='the dir to save logs and models')
+    parser.add_argument('--work-dir', default=work_dir, help='the dir to save logs and models')
     parser.add_argument(
         '--resume-from', default=resume_file, help='the checkpoint file to resume from')
     parser.add_argument(
