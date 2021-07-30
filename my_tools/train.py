@@ -21,14 +21,11 @@ import glob
 
 def parse_args():
     cfg = ('configs/swin/' + 
-           'htc_swin_large_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
+           'cascade_mask_rcnn_swin_large_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
     
     cfg_options = {'model.pretrained': 'swin_large_patch4_window12_384_22k.pth',
                    'model.backbone.use_checkpoint': 'True'}
     
-    # resume_file = ('work_dirs_tzb/' + 
-    #                'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco_002/' + 
-    #                'epoch_78.pth')
     resume_file = None
     
     work_dir = 'work_dirs_tzb/' + cfg.split('/')[-1].split('.')[0]
