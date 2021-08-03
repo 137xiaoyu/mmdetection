@@ -63,10 +63,12 @@ if __name__ == '__main__':
         F1_all.append(F1)
 
     mF1 = np.mean(F1_all)
+    max_F1_j = np.argmax(F1_all)
     print("\nconfidence   precision   recall   F1  ")
     for i, (c, p, r, f1) in enumerate(zip(confidence_all, precision_all, recall_all, F1_all)):
         print('{:.3f}        {:.3f}       {:.3f}    {:.3f}'.format(c, p[0], r[0], f1[0]))
     print("mF1 = {}".format(mF1))
+    print(f'max_F1 = {F1_all[max_F1_j][0]}, conf = {confidence_all[max_F1_j]}')
 
     with open(predict_json_file, 'r') as file:
         preds = json.load(file)
