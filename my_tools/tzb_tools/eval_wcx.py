@@ -2,7 +2,6 @@ import os
 import json
 import numpy as np
 import sys
-sys.path.append('/dev2/Fengjq/1grade/ship_det/mmdetection/fjq_workspace/tools/')
 
 from utils_for_evaluate_eval_only import evaluate_two_jsons_with_different_confidence
 
@@ -20,7 +19,7 @@ if __name__ == '__main__':
     output_root = '/data/output_path_wcx'
     output_dir = os.path.join(output_root, os.path.splitext(os.path.basename(cfg_file))[0])
 
-    label_json_file = '/dev2/Fengjq/1grade/ship_det/mmdetection/fjq_workspace/input_data/Data_root/val/bigship.json'
+    label_json_file = './bigship.json'
     predict_json_file = f'{output_dir}/ship_results.json'
 
     classes = ['bigship']
