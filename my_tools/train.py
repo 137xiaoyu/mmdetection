@@ -21,7 +21,7 @@ import glob
 
 def parse_args():
     cfg = ('configs/swin/' + 
-           'cascade_mask_rcnn_swin_large_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
+           'cascade_rcnn_swin_large_patch4_window12_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py')
     
     cfg_options = {'model.pretrained': 'swin_large_patch4_window12_384_22k.pth',
                    'model.backbone.use_checkpoint': 'True'}
