@@ -17,9 +17,10 @@ import DOTA_devkit.polyiou as polyiou
 
 
 def parse_args():
-    cfg_name = 'cascade_mask_rcnn_swin_base_patch4_window7_mstrain_480-800_giou_4conv1f_adamw_3x_coco.py'
-    ckpt_name = 'epoch_151.pth'
-    device = 'cuda:1'
+    cfg_name = 'cascade_rcnn_r101_fpn_20e_coco_tzb.py'
+    ckpt_name = 'epoch_200.pth'
+    device = 'cuda:0'
+    batch_size = 32
 
 
     subsize = 768
@@ -43,8 +44,8 @@ def parse_args():
     parser.add_argument("--output_dir", default=output_dir, help="output path", type=str)
     parser.add_argument('--config', default=cfg_file, help='Config file')
     parser.add_argument('--checkpoint', default=ckpt_file, help='Checkpoint file')
-    parser.add_argument(
-        '--device', default=device, help='Device used for inference')
+    parser.add_argument('--batch-size', default=batch_size, help='Batch size')
+    parser.add_argument('--device', default=device, help='Device used for inference')
 
     args = parser.parse_args()
 
@@ -98,7 +99,7 @@ def py_cpu_nms_poly_fast_np(dets, thresh):
     return keep
 
 
-def inference_single(model,imagname, slide_size, chip_size,classnames):
+def inference_single(model, imagname, slide_size, chip_size, classnames, batch_size=1):
     img = mmcv.imread(imagname)
     height, width, channel = img.shape
     slide_h, slide_w = slide_size
@@ -106,6 +107,8 @@ def inference_single(model,imagname, slide_size, chip_size,classnames):
 
     # TODO: check the corner case
     total_detections = [np.zeros((0, 5)) for _ in range(len(classnames))]
+    sub_imgs = []
+    sub_ijs = []
 
     for i in range(int(width / slide_w + 1)):
         for j in range(int(height / slide_h) + 1):
@@ -113,22 +116,23 @@ def inference_single(model,imagname, slide_size, chip_size,classnames):
             chip = img[j * slide_h:j * slide_h + hn, i * slide_w:i * slide_w + wn, :3]
             subimg[:chip.shape[0], :chip.shape[1], :] = chip
 
-            chip_detections = inference_detector(model, subimg)
+            sub_imgs.append(subimg)
+            sub_ijs.append((i, j))
+            if len(sub_imgs) < batch_size:
+                continue
             
-            if isinstance(chip_detections[0], list):
-                chip_detections = chip_detections[0]
-            elif isinstance(chip_detections[0], np.ndarray):
-                pass
-            else:
-                raise ValueError(f'type of chip_detections should be list or ndarray, not {type(chip_detections)}')
+            chip_detections = inference_detector(model, sub_imgs)
 
-            for cls_id, name in enumerate(classnames):
-                chip_detections[cls_id][:, 0:-1:2] += i * slide_w
-                chip_detections[cls_id][:, 1:-1:2] += j * slide_h
-                try:
-                    total_detections[cls_id] = np.concatenate((total_detections[cls_id], chip_detections[cls_id]))
-                except:
-                    pdb.set_trace()
+            for chip_detection, ij in zip(chip_detections, sub_ijs):
+                for cls_id, name in enumerate(classnames):
+                    chip_detection[cls_id][:, 0:-1:2] += ij[0] * slide_w
+                    chip_detection[cls_id][:, 1:-1:2] += ij[1] * slide_h
+                    try:
+                        total_detections[cls_id] = np.concatenate((total_detections[cls_id], chip_detection[cls_id]))
+                    except:
+                        pdb.set_trace()
+            sub_imgs = []
+            sub_ijs = []
 
     for i in range(len(classnames)):
         keep = py_cpu_nms_poly_fast_np(total_detections[i], 0.5)
@@ -143,7 +147,7 @@ if __name__ == '__main__':
 
     print(f'score_thr={cfg.model.test_cfg.rcnn.score_thr}\n'
           f'subsize={args.subsize}, overlap={args.overlap}\n'
-          f'device={args.device}')
+          f'batch_size={args.batch_size}', f'device={args.device}')
 
 
     print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: initializing detector...')
@@ -167,7 +171,7 @@ if __name__ == '__main__':
         print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: {img_j + 1}/{len(input_img_list)}')
 
         input_big_img_path = os.path.join(args.input_dir, 'img', input_big_img)
-        result = inference_single(model, input_big_img_path, slide_size, chip_size, classes)
+        result = inference_single(model, input_big_img_path, slide_size, chip_size, classes, batch_size=args.batch_size)
 
         output_dict = {}
         output_dict.update({'image_name': input_big_img})
