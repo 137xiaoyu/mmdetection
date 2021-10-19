@@ -6,7 +6,7 @@ import cv2
 
 
 def generate_gt_json():
-    train_root = 'input_path/train'
+    train_root = 'D:/137/dataset/tzb/input_path/train'
     img_path = os.path.join(train_root, 'img')
     gt_path = os.path.join(train_root, 'mask')
     img_list = sorted(glob.glob(os.path.join(img_path, '*.png')))
@@ -80,5 +80,5 @@ def visualize_gt():
 
 
 if __name__ == '__main__':
-    # generate_gt_json()
-    visualize_gt()
+    generate_gt_json()
+    # visualize_gt()
