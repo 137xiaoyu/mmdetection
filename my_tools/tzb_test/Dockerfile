@@ -31,7 +31,7 @@ RUN cd /work/DOTA_devkit && swig -c++ -python polyiou.i && python setup.py build
 RUN cd /work && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements/build.txt && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -e .
 
 # build apex
-RUN cd /work/apex && pip install --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+# RUN cd /work/apex && pip install --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 
 # 容器启动命令
 CMD ["python3", "-u", "/work/main.py"]

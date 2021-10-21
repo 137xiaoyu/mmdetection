@@ -19,42 +19,35 @@ import DOTA_devkit.polyiou as polyiou
 def parse_args():
     cfg_name = 'cascade_rcnn_r101_fpn_20e_coco_tzb.py'
     ckpt_name = 'epoch_200.pth'
-    thr = 0.99
+    device = 'cuda:0'
     batch_size = 32
+    nms_thr = 0.3
 
 
     subsize = 768
     overlap = 200
 
 
-    device = 'cuda:0'
+    file_root = os.path.abspath('work_dirs')
+    cfg_file = os.path.join(file_root, cfg_name)
+    ckpt_file = os.path.join(file_root, ckpt_name)
 
-
-    cfg_options = {'model.test_cfg.rcnn.score_thr': thr}
-    cfg_file = os.path.join('/work/work_dirs', cfg_name)
-    ckpt_file = os.path.join('/work/work_dirs', ckpt_name)
-
+    input_dir = '/data/input_path'
+    output_root = '/data/output_path_wcx'
+    output_dir = os.path.join(output_root, os.path.splitext(os.path.basename(cfg_file))[0])
+    temp_dir = os.path.join(output_root, 'tmp')
+    
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--subsize', default=subsize, help='size of splitted images')
     parser.add_argument('--overlap', default=overlap, help='overlap of splitted images')
-    parser.add_argument("--input-dir", default='/input_path', help="input path", type=str)
-    parser.add_argument("--output-dir", default='/output_path', help="output path", type=str)
+    parser.add_argument("--input_dir", default=input_dir, help="input path", type=str)
+    parser.add_argument("--output_dir", default=output_dir, help="output path", type=str)
     parser.add_argument('--config', default=cfg_file, help='Config file')
     parser.add_argument('--checkpoint', default=ckpt_file, help='Checkpoint file')
     parser.add_argument('--batch-size', default=batch_size, help='Batch size')
+    parser.add_argument('--nms-thr', default=nms_thr, help='Device used for inference')
     parser.add_argument('--device', default=device, help='Device used for inference')
-    parser.add_argument(
-        '--cfg-options',
-        nargs='+',
-        action=DictAction,
-        default=cfg_options,
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
 
     args = parser.parse_args()
 
@@ -108,7 +101,7 @@ def py_cpu_nms_poly_fast_np(dets, thresh):
     return keep
 
 
-def inference_single(model, imagname, slide_size, chip_size, classnames, batch_size=1):
+def inference_single(model, imagname, slide_size, chip_size, classnames, batch_size=1, nms_thr=0.3):
     img = mmcv.imread(imagname)
     height, width, channel = img.shape
     slide_h, slide_w = slide_size
@@ -144,7 +137,7 @@ def inference_single(model, imagname, slide_size, chip_size, classnames, batch_s
             sub_ijs = []
 
     for i in range(len(classnames)):
-        keep = py_cpu_nms_poly_fast_np(total_detections[i], 0.5)
+        keep = py_cpu_nms_poly_fast_np(total_detections[i], nms_thr)
         total_detections[i] = total_detections[i][keep]
     return total_detections
 
@@ -153,12 +146,11 @@ if __name__ == '__main__':
     args = parse_args()
 
     cfg = Config.fromfile(args.config)
-    if args.cfg_options is not None:
-        cfg.merge_from_dict(args.cfg_options)
 
     print(f'score_thr={cfg.model.test_cfg.rcnn.score_thr}\n'
           f'subsize={args.subsize}, overlap={args.overlap}\n'
-          f'batch_size={args.batch_size}', f'device={args.device}')
+          f'batch_size={args.batch_size}', f'nms_thr={args.nms_thr}\n'
+          f'device={args.device}')
 
 
     print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: initializing detector...')
@@ -182,7 +174,7 @@ if __name__ == '__main__':
         print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: {img_j + 1}/{len(input_img_list)}')
 
         input_big_img_path = os.path.join(args.input_dir, 'img', input_big_img)
-        result = inference_single(model, input_big_img_path, slide_size, chip_size, classes, batch_size=args.batch_size)
+        result = inference_single(model, input_big_img_path, slide_size, chip_size, classes, batch_size=args.batch_size, nms_thr=args.nms_thr)
 
         output_dict = {}
         output_dict.update({'image_name': input_big_img})
