@@ -22,6 +22,7 @@ def parse_args():
     device = 'cuda:0'
     batch_size = 32
     nms_thr = 0.3
+    bbox_area_thr = 2950
 
 
     subsize = 768
@@ -47,6 +48,7 @@ def parse_args():
     parser.add_argument('--checkpoint', default=ckpt_file, help='Checkpoint file')
     parser.add_argument('--batch-size', default=batch_size, help='Batch size')
     parser.add_argument('--nms-thr', default=nms_thr, help='Device used for inference')
+    parser.add_argument('--bbox-area-thr', default=bbox_area_thr, help='Device used for inference')
     parser.add_argument('--device', default=device, help='Device used for inference')
 
     args = parser.parse_args()
@@ -101,7 +103,7 @@ def py_cpu_nms_poly_fast_np(dets, thresh):
     return keep
 
 
-def inference_single(model, imagname, slide_size, chip_size, classnames, batch_size=1, nms_thr=0.3):
+def inference_single(model, imagname, slide_size, chip_size, classnames, batch_size=1, nms_thr=0.3, bbox_area_thr=2950):
     img = mmcv.imread(imagname)
     height, width, channel = img.shape
     slide_h, slide_w = slide_size
@@ -127,12 +129,24 @@ def inference_single(model, imagname, slide_size, chip_size, classnames, batch_s
 
             for chip_detection, ij in zip(chip_detections, sub_ijs):
                 for cls_id, name in enumerate(classnames):
-                    chip_detection[cls_id][:, 0:-1:2] += ij[0] * slide_w
-                    chip_detection[cls_id][:, 1:-1:2] += ij[1] * slide_h
-                    try:
-                        total_detections[cls_id] = np.concatenate((total_detections[cls_id], chip_detection[cls_id]))
-                    except:
-                        pdb.set_trace()
+                    # chip_detection_cls = ndarray([[x1, y1, x3, y3, confidence], ...])
+                    chip_detection_cls = chip_detection[cls_id]
+                    
+                    bbox_ids_to_delete = []
+                    for bbox_id in range(chip_detection_cls.shape[0]):
+                        xmin, ymin, xmax, ymax = chip_detection_cls[bbox_id, 0:-1]
+                        if (xmax - xmin)*(ymax - ymin) < bbox_area_thr:
+                            bbox_ids_to_delete.append(bbox_id)
+                            
+                    chip_detection_cls = np.delete(chip_detection_cls, bbox_ids_to_delete, axis=0)
+                    
+                    if chip_detection_cls.size:
+                        chip_detection_cls[:, 0:-1:2] += ij[0] * slide_w
+                        chip_detection_cls[:, 1:-1:2] += ij[1] * slide_h
+                        try:
+                            total_detections[cls_id] = np.concatenate((total_detections[cls_id], chip_detection_cls))
+                        except:
+                            pdb.set_trace()
             sub_imgs = []
             sub_ijs = []
 
@@ -147,10 +161,10 @@ if __name__ == '__main__':
 
     cfg = Config.fromfile(args.config)
 
-    print(f'score_thr={cfg.model.test_cfg.rcnn.score_thr}\n'
-          f'subsize={args.subsize}, overlap={args.overlap}\n'
-          f'batch_size={args.batch_size}', f'nms_thr={args.nms_thr}\n'
-          f'device={args.device}')
+    print(f'subsize={args.subsize}, overlap={args.overlap}\n'
+          f'score_thr={cfg.model.test_cfg.rcnn.score_thr}\n'
+          f'nms_thr={args.nms_thr}, bbox_area_thr={args.bbox_area_thr}\n'
+          f'batch_size={args.batch_size}, device={args.device}\n')
 
 
     print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: initializing detector...')
@@ -174,7 +188,7 @@ if __name__ == '__main__':
         print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: {img_j + 1}/{len(input_img_list)}')
 
         input_big_img_path = os.path.join(args.input_dir, 'img', input_big_img)
-        result = inference_single(model, input_big_img_path, slide_size, chip_size, classes, batch_size=args.batch_size, nms_thr=args.nms_thr)
+        result = inference_single(model, input_big_img_path, slide_size, chip_size, classes, batch_size=args.batch_size, nms_thr=args.nms_thr, bbox_area_thr=args.bbox_area_thr)
 
         output_dict = {}
         output_dict.update({'image_name': input_big_img})
