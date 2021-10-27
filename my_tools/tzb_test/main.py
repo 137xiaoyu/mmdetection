@@ -17,10 +17,10 @@ import DOTA_devkit.polyiou as polyiou
 
 
 def parse_args():
-    cfg_name = 'cascade_rcnn_r101_fpn_20e_coco_tzb.py'
-    ckpt_name = 'epoch_200.pth'
-    thr = 0.99
-    batch_size = 32
+    cfg_names = ['r101/cascade_rcnn_r101_fpn_20e_coco_tzb.py', 'r101_rotate/cascade_rcnn_r101_fpn_mstrain_20e_coco_tzb.py']
+    ckpt_names = ['r101/epoch_200.pth', 'r101_rotate/epoch_200.pth']
+    score_thrs = [0.995, 0.97]
+    batch_size = 1
     nms_thr = 0.3
     bbox_area_thr = 2950
 
@@ -32,37 +32,40 @@ def parse_args():
     device = 'cuda:0'
 
 
-    cfg_options = {'model.test_cfg.rcnn.score_thr': thr}
-    cfg_file = os.path.join('/work/work_dirs', cfg_name)
-    ckpt_file = os.path.join('/work/work_dirs', ckpt_name)
+    args_list = []
+    for i in range(len(cfg_names)):
+        cfg_options = {'model.test_cfg.rcnn.score_thr': score_thrs[i]}
+        cfg_file = os.path.join('/work/work_dirs', cfg_names[i])
+        ckpt_file = os.path.join('/work/work_dirs', ckpt_names[i])
 
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--subsize', default=subsize, help='size of splitted images')
-    parser.add_argument('--overlap', default=overlap, help='overlap of splitted images')
-    parser.add_argument("--input-dir", default='/input_path', help="input path", type=str)
-    parser.add_argument("--output-dir", default='/output_path', help="output path", type=str)
-    parser.add_argument('--config', default=cfg_file, help='Config file')
-    parser.add_argument('--checkpoint', default=ckpt_file, help='Checkpoint file')
-    parser.add_argument('--batch-size', default=batch_size, help='Batch size')
-    parser.add_argument('--device', default=device, help='Device used for inference')
-    parser.add_argument('--nms-thr', default=nms_thr, help='Device used for inference')
-    parser.add_argument('--bbox-area-thr', default=bbox_area_thr, help='Device used for inference')
-    parser.add_argument(
-        '--cfg-options',
-        nargs='+',
-        action=DictAction,
-        default=cfg_options,
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--subsize', default=subsize, help='size of splitted images')
+        parser.add_argument('--overlap', default=overlap, help='overlap of splitted images')
+        parser.add_argument("--input-dir", default='/input_path', help="input path", type=str)
+        parser.add_argument("--output-dir", default='/output_path', help="output path", type=str)
+        parser.add_argument('--config', default=cfg_file, help='Config file')
+        parser.add_argument('--checkpoint', default=ckpt_file, help='Checkpoint file')
+        parser.add_argument('--batch-size', default=batch_size, help='Batch size')
+        parser.add_argument('--device', default=device, help='Device used for inference')
+        parser.add_argument('--nms-thr', default=nms_thr, help='Device used for inference')
+        parser.add_argument('--bbox-area-thr', default=bbox_area_thr, help='Device used for inference')
+        parser.add_argument(
+            '--cfg-options',
+            nargs='+',
+            action=DictAction,
+            default=cfg_options,
+            help='override some settings in the used config, the key-value pair '
+            'in xxx=yyy format will be merged into config file. If the value to '
+            'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+            'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+            'Note that the quotation marks are necessary and that no white space '
+            'is allowed.')
 
-    args = parser.parse_args()
+        args = parser.parse_args()
+        args_list.append(args)
 
-    return args
+    return args_list
 
 
 def py_cpu_nms_poly_fast_np(dets, thresh):
@@ -112,7 +115,7 @@ def py_cpu_nms_poly_fast_np(dets, thresh):
     return keep
 
 
-def inference_single(model, imagname, slide_size, chip_size, classnames, batch_size=1, nms_thr=0.3, bbox_area_thr=2950):
+def inference_single(cfg_list, args_list, imagname, slide_size, chip_size, classnames, batch_size=1, nms_thr=0.3, bbox_area_thr=2950):
     img = mmcv.imread(imagname)
     height, width, channel = img.shape
     slide_h, slide_w = slide_size
@@ -123,41 +126,43 @@ def inference_single(model, imagname, slide_size, chip_size, classnames, batch_s
     sub_imgs = []
     sub_ijs = []
 
-    for i in range(int(width / slide_w + 1)):
-        for j in range(int(height / slide_h) + 1):
-            subimg = np.zeros((hn, wn, channel))
-            chip = img[j * slide_h:j * slide_h + hn, i * slide_w:i * slide_w + wn, :3]
-            subimg[:chip.shape[0], :chip.shape[1], :] = chip
+    for model_i in range(len(cfg_list)):
+        model = init_detector(cfg_list[model_i], args_list[model_i].checkpoint, device=args_list[model_i].device)
+        for i in range(int(width / slide_w + 1)):
+            for j in range(int(height / slide_h) + 1):
+                subimg = np.zeros((hn, wn, channel))
+                chip = img[j * slide_h:j * slide_h + hn, i * slide_w:i * slide_w + wn, :3]
+                subimg[:chip.shape[0], :chip.shape[1], :] = chip
 
-            sub_imgs.append(subimg)
-            sub_ijs.append((i, j))
-            if len(sub_imgs) < batch_size:
-                continue
-            
-            chip_detections = inference_detector(model, sub_imgs)
+                sub_imgs.append(subimg)
+                sub_ijs.append((i, j))
+                if len(sub_imgs) < batch_size:
+                    continue
+                
+                chip_detections = inference_detector(model, sub_imgs)
 
-            for chip_detection, ij in zip(chip_detections, sub_ijs):
-                for cls_id, name in enumerate(classnames):
-                    # chip_detection_cls = ndarray([[x1, y1, x3, y3, confidence], ...])
-                    chip_detection_cls = chip_detection[cls_id]
-                    
-                    bbox_ids_to_delete = []
-                    for bbox_id in range(chip_detection_cls.shape[0]):
-                        xmin, ymin, xmax, ymax = chip_detection_cls[bbox_id, 0:-1]
-                        if (xmax - xmin)*(ymax - ymin) < bbox_area_thr:
-                            bbox_ids_to_delete.append(bbox_id)
-                            
-                    chip_detection_cls = np.delete(chip_detection_cls, bbox_ids_to_delete, axis=0)
-                    
-                    if chip_detection_cls.size:
-                        chip_detection_cls[:, 0:-1:2] += ij[0] * slide_w
-                        chip_detection_cls[:, 1:-1:2] += ij[1] * slide_h
-                        try:
-                            total_detections[cls_id] = np.concatenate((total_detections[cls_id], chip_detection_cls))
-                        except:
-                            pdb.set_trace()
-            sub_imgs = []
-            sub_ijs = []
+                for chip_detection, ij in zip(chip_detections, sub_ijs):
+                    for cls_id, name in enumerate(classnames):
+                        # chip_detection_cls = ndarray([[x1, y1, x3, y3, confidence], ...])
+                        chip_detection_cls = chip_detection[cls_id]
+                        
+                        bbox_ids_to_delete = []
+                        for bbox_id in range(chip_detection_cls.shape[0]):
+                            xmin, ymin, xmax, ymax = chip_detection_cls[bbox_id, 0:-1]
+                            if (xmax - xmin)*(ymax - ymin) < bbox_area_thr:
+                                bbox_ids_to_delete.append(bbox_id)
+                                
+                        chip_detection_cls = np.delete(chip_detection_cls, bbox_ids_to_delete, axis=0)
+                        
+                        if chip_detection_cls.size:
+                            chip_detection_cls[:, 0:-1:2] += ij[0] * slide_w
+                            chip_detection_cls[:, 1:-1:2] += ij[1] * slide_h
+                            try:
+                                total_detections[cls_id] = np.concatenate((total_detections[cls_id], chip_detection_cls))
+                            except:
+                                pdb.set_trace()
+                sub_imgs = []
+                sub_ijs = []
 
     for i in range(len(classnames)):
         keep = py_cpu_nms_poly_fast_np(total_detections[i], nms_thr)
@@ -166,30 +171,29 @@ def inference_single(model, imagname, slide_size, chip_size, classnames, batch_s
 
 
 if __name__ == '__main__':
-    args = parse_args()
+    args_list = parse_args()
 
-    cfg = Config.fromfile(args.config)
-    if args.cfg_options is not None:
-        cfg.merge_from_dict(args.cfg_options)
+    cfg_list = []
+    for args in args_list:
+        cfg = Config.fromfile(args.config)
+        if args.cfg_options is not None:
+            cfg.merge_from_dict(args.cfg_options)
 
-    print(f'subsize={args.subsize}, overlap={args.overlap}\n'
-          f'score_thr={cfg.model.test_cfg.rcnn.score_thr}\n'
-          f'nms_thr={args.nms_thr}, bbox_area_thr={args.bbox_area_thr}\n'
-          f'batch_size={args.batch_size}, device={args.device}\n')
+        cfg_list.append(cfg)
+        
+    print(f'subsize={args_list[0].subsize}, overlap={args_list[0].overlap}\n'
+          f'cfg={[args.config for args in args_list]}\n'
+          f'score_thr={[cfg.model.test_cfg.rcnn.score_thr for cfg in cfg_list]}\n'
+          f'nms_thr={args_list[0].nms_thr}, bbox_area_thr={args_list[0].bbox_area_thr}\n'
+          f'batch_size={args_list[0].batch_size}, device={args_list[0].device}\n')
 
-
-    print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: initializing detector...')
-
-    start_time = time.time()
     torch.backends.cudnn.benchmark = True
 
     classes = ['bigship']
     slide_size = (args.subsize - args.overlap, args.subsize - args.overlap)
     chip_size = (args.subsize, args.subsize)
 
-    model = init_detector(cfg, args.checkpoint, device=args.device)
     input_img_list = os.listdir(os.path.join(args.input_dir,'img'))
-
 
     print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: inferring results...')
 
@@ -199,7 +203,7 @@ if __name__ == '__main__':
         print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: {img_j + 1}/{len(input_img_list)}')
 
         input_big_img_path = os.path.join(args.input_dir, 'img', input_big_img)
-        result = inference_single(model, input_big_img_path, slide_size, chip_size, classes, batch_size=args.batch_size, nms_thr=args.nms_thr, bbox_area_thr=args.bbox_area_thr)
+        result = inference_single(cfg_list, args_list, input_big_img_path, slide_size, chip_size, classes, batch_size=args.batch_size, nms_thr=args.nms_thr, bbox_area_thr=args.bbox_area_thr)
 
         output_dict = {}
         output_dict.update({'image_name': input_big_img})
