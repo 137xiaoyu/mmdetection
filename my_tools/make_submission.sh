@@ -1,0 +1,2 @@
+# python -m debugpy --listen localhost:5678 --wait-for-client my_tools/make_submission.py D:/137/dataset/competitions/shipdet_dcic/xmy_data/test.txt my_tools/results/out.pkl my_tools/results/submission.csv --score_thrs 0.85 0.8
+python my_tools/make_submission.py D:/137/dataset/competitions/shipdet_dcic/xmy_data/test.txt my_tools/results/out.pkl my_tools/results/submission.csv --score_thrs 0.85 0.8 0.75 0.7

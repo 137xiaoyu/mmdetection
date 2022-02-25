@@ -6,7 +6,7 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1000, 600), keep_ratio=True),
+    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
@@ -17,7 +17,7 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(1000, 600),
+        img_scale=(1333, 800),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -53,7 +53,7 @@ data = dict(
     test=dict(
         type=dataset_type,
         classes=classes,
-        ann_file=data_root + 'val.txt',
-        img_prefix=data_root + 'trainval/VOC2012/',
+        ann_file=data_root + 'test.txt',
+        img_prefix=data_root + 'test/VOC2012/',
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='mAP')
