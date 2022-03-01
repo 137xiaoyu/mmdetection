@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/cascade_mask_rcnn_swin_fpn_shipdet_dcic.py',
+    '../_base_/models/cascade_rcnn_swin_fpn_shipdet_dcic.py',
     '../_base_/datasets/voc_shipdet_dcic.py',
     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
@@ -84,13 +84,36 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='AutoAugment_copy', autoaug_type='v2'),
-    dict(
-        type='Resize',
-        img_scale=[(768, 768), (1024, 1024)],
-        multiscale_mode='range',
-        keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='AutoAugment',
+         policies=[
+             [
+                 dict(type='Resize',
+                      img_scale=[(480, 480), (512, 512), (544, 544), (576, 576),
+                                 (608, 608), (640, 640), (672, 672), (704, 704),
+                                 (736, 736), (768, 768), (800, 800)],
+                      multiscale_mode='value',
+                      keep_ratio=True)
+             ],
+             [
+                 dict(type='Resize',
+                      img_scale=[(400, 400), (500, 500), (600, 600)],
+                      multiscale_mode='value',
+                      keep_ratio=True),
+                 dict(type='RandomCrop',
+                      crop_type='absolute_range',
+                      crop_size=(384, 384),
+                      allow_negative_crop=True),
+                 dict(type='Resize',
+                      img_scale=[(480, 480), (512, 512), (544, 544),
+                                 (576, 576), (608, 608), (640, 640),
+                                 (672, 672), (704, 704), (736, 736),
+                                 (768, 768), (800, 800)],
+                      multiscale_mode='value',
+                      override=True,
+                      keep_ratio=True)
+             ]
+         ]),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
@@ -100,8 +123,8 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=[(768, 768), (896, 896), (1024, 1024)],
-        flip=True,
+        img_scale=(800, 800),
+        flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
@@ -111,13 +134,13 @@ test_pipeline = [
             dict(type='Collect', keys=['img']),
         ])
 ]
-data = dict(samples_per_gpu=2,
-            workers_per_gpu=2,
+data = dict(samples_per_gpu=3,
+            workers_per_gpu=3,
             train=dict(pipeline=train_pipeline),
             val=dict(pipeline=test_pipeline),
             test=dict(pipeline=test_pipeline))
 
-optimizer = dict(_delete_=True, type='AdamW', lr=0.0000125, betas=(0.9, 0.999), weight_decay=0.05,
+optimizer = dict(_delete_=True, type='AdamW', lr=0.0000375, betas=(0.9, 0.999), weight_decay=0.05,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.)}))

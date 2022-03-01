@@ -37,6 +37,7 @@ if __name__ == '__main__':
         results = pickle.load(f)
 
     submission = {}
+    empty_num = 0
 
     for res, id in zip(results, img_ids):
         submission[id] = []
@@ -44,11 +45,14 @@ if __name__ == '__main__':
         res = np.vstack(res)  # only one class
         new_res = apply_score_thrs(res, args.score_thrs)
 
-        for bbox in new_res:
-            x0, y0 = (bbox[0] + bbox[2]) * 1.0 / 2, (bbox[1] + bbox[3]) * 1.0 / 2
-            width = bbox[2] - bbox[0]
-            height = bbox[3] - bbox[1]
-            submission[id].append([x0 / 256, y0 / 256, width / 256, height / 256])
+        if new_res.shape[0]:
+            for bbox in new_res:
+                x0, y0 = (bbox[0] + bbox[2]) * 1.0 / 2, (bbox[1] + bbox[3]) * 1.0 / 2
+                width = bbox[2] - bbox[0]
+                height = bbox[3] - bbox[1]
+                submission[id].append([x0 / 256, y0 / 256, width / 256, height / 256])
+        else:
+            empty_num += 1
 
     with open(args.submission_file, 'w') as f:
         for key, value in submission.items():
@@ -58,3 +62,5 @@ if __name__ == '__main__':
             write_line = write_line.strip(";")
             write_line += "\n"
             f.write(write_line)
+            
+    print(f'empty num: {empty_num}')

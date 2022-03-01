@@ -48,6 +48,7 @@ data = dict(
     test=dict(
         type=dataset_type,
         classes=classes,
+        ann_file=data_root + 'test.txt',
         img_prefix=data_root + 'test/VOC2012/',
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='mAP')
