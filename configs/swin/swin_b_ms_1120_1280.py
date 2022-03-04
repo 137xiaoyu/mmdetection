@@ -83,12 +83,10 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='AutoAugment_copy', autoaug_type='v2'),
-    dict(
-        type='Resize',
-        img_scale=[(768, 768), (1024, 1024)],
-        multiscale_mode='range',
-        keep_ratio=True),
+    dict(type='Resize',
+         img_scale=[(1120, 1120), (1280, 1280)],
+         multiscale_mode='range',
+         keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
@@ -99,7 +97,7 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=[(768, 768), (896, 896), (1024, 1024)],
+        img_scale=[(1120, 1120), (1200, 1200), (1280, 1280)],
         flip=True,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -116,12 +114,12 @@ data = dict(samples_per_gpu=2,
             val=dict(pipeline=test_pipeline),
             test=dict(pipeline=test_pipeline))
 
-optimizer = dict(_delete_=True, type='AdamW', lr=0.0000125, betas=(0.9, 0.999), weight_decay=0.05,
+optimizer = dict(_delete_=True, type='AdamW', lr=0.000025, betas=(0.9, 0.999), weight_decay=0.05,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.)}))
-lr_config = dict(step=[27, 33])
-runner = dict(type='EpochBasedRunner', max_epochs=36)
+lr_config = dict(step=[9, 11])
+runner = dict(type='EpochBasedRunner', max_epochs=12)
 
 # do not use mmdet version fp16
 # fp16 = None
