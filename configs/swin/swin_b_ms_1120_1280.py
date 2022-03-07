@@ -108,18 +108,19 @@ test_pipeline = [
             dict(type='Collect', keys=['img']),
         ])
 ]
-data = dict(samples_per_gpu=2,
-            workers_per_gpu=2,
+data = dict(samples_per_gpu=1,
+            workers_per_gpu=1,
             train=dict(pipeline=train_pipeline),
             val=dict(pipeline=test_pipeline),
             test=dict(pipeline=test_pipeline))
 
-optimizer = dict(_delete_=True, type='AdamW', lr=0.000025, betas=(0.9, 0.999), weight_decay=0.05,
+optimizer = dict(_delete_=True, type='AdamW', lr=1.0e-4, betas=(0.9, 0.999), weight_decay=0.05,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.)}))
-lr_config = dict(step=[9, 11])
+lr_config = dict(step=[8, 11])
 runner = dict(type='EpochBasedRunner', max_epochs=12)
+evaluation = dict(interval=4)
 
 # do not use mmdet version fp16
 # fp16 = None
