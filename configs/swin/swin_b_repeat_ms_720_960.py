@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/models/cascade_rcnn_swin_fpn_shipdet_dcic.py',
-    '../_base_/datasets/voc_shipdet_dcic.py',
+    '../_base_/datasets/voc_repeat_shipdet_dcic.py',
     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
 
@@ -83,7 +83,10 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1000, 600), keep_ratio=True),
+    dict(type='Resize',
+         img_scale=[(720, 720), (960, 960)],
+         multiscale_mode='range',
+         keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
@@ -94,8 +97,8 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(1000, 600),
-        flip=False,
+        img_scale=[(720, 720), (840, 840), (960, 960)],
+        flip=True,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
@@ -105,19 +108,17 @@ test_pipeline = [
             dict(type='Collect', keys=['img']),
         ])
 ]
-data = dict(samples_per_gpu=6,
-            workers_per_gpu=6,
-            train=dict(pipeline=train_pipeline),
+data = dict(samples_per_gpu=2,
+            workers_per_gpu=2,
+            train=dict(dataset=dict(pipeline=train_pipeline)),
             val=dict(pipeline=test_pipeline),
             test=dict(pipeline=test_pipeline))
 
-optimizer = dict(_delete_=True, type='AdamW', lr=3.75e-5, betas=(0.9, 0.999), weight_decay=0.05,
+optimizer = dict(_delete_=True, type='AdamW', lr=1.25e-5, betas=(0.9, 0.999), weight_decay=0.05,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.)}))
-lr_config = dict(step=[27, 33])
-runner = dict(type='EpochBasedRunner', max_epochs=36)
-evaluation = dict(interval=1)
+evaluation = dict(interval=12)
 
 # do not use mmdet version fp16
 # fp16 = None
