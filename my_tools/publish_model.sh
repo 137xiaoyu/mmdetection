@@ -1,0 +1,1 @@
+python my_tools/publish_model.py work_dirs/swin_b_repeat_ms_720_960/epoch_12.pth work_dirs/swin_b_repeat_ms_720_960/epoch_12_published.pth
